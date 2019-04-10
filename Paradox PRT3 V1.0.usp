@@ -1,0 +1,507 @@
+/*******************************************************************************************
+  SIMPL+ Module Information
+  (Fill in comments below)
+*******************************************************************************************/
+/*
+Dealer Name:	CAV Foshan
+System Name:
+System Number:
+Programmer:		Nicky Chen	QQ:9696963
+First Edit:		2019-04-01
+Comments:
+*/
+
+/*******************************************************************************************
+  Compiler Directives
+  (Uncomment and declare compiler directives as needed)
+*******************************************************************************************/
+// #ENABLE_DYNAMIC
+#SYMBOL_NAME		"Paradox PRT3 V1.0"
+// #HINT ""
+#DEFINE_CONSTANT	PARTITION	8		//分区数量
+#DEFINE_CONSTANT	ZONE		10		//防区数量
+// #DEFINE_CONSTANT
+// #CATEGORY "" 
+#CATEGORY			"21"				//Security
+// #PRINT_TO_TRACE
+// #DIGITAL_EXPAND 
+// #ANALOG_SERIAL_EXPAND 
+// #OUTPUT_SHIFT 
+// #HELP_PDF_FILE ""
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+// #ENCODING_ASCII
+// #ENCODING_UTF16
+// #ENCODING_INHERIT_FROM_PARENT
+// #ENCODING_INHERIT_FROM_PROGRAM
+/*
+#HELP_BEGIN
+   (add additional lines of help lines)
+#HELP_END
+*/
+
+/*******************************************************************************************
+  Include Libraries
+  (Uncomment and include additional libraries as needed)
+*******************************************************************************************/
+// #CRESTRON_LIBRARY ""
+// #USER_LIBRARY ""
+
+/*******************************************************************************************
+  DIGITAL, ANALOG and SERIAL INPUTS and OUTPUTS
+  (Uncomment and declare inputs and outputs as needed)
+*******************************************************************************************/
+DIGITAL_INPUT	_SKIP_,Query,Partition_Arm[PARTITION],_SKIP_,Partition_Disarm[PARTITION];
+DIGITAL_INPUT	_SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_,
+				_SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_,_SKIP_,
+				_SKIP_,_SKIP_,_SKIP_,_SKIP_;
+BUFFER_INPUT	RxData[22];
+
+// DIGITAL_OUTPUT 
+// ANALOG_OUTPUT 
+// STRING_OUTPUT 
+
+DIGITAL_OUTPUT	_SKIP_,_SKIP_,Partition_Armd[PARTITION],_SKIP_,Partition_Disarmed[PARTITION],
+				_SKIP_,Zone_Alarm[ZONE],_SKIP_,Zone_Open[ZONE];
+STRING_OUTPUT   _SKIP_,log,TxData;
+
+
+/*******************************************************************************************
+  SOCKETS
+  (Uncomment and define socket definitions as needed)
+*******************************************************************************************/
+// TCP_CLIENT
+// TCP_SERVER
+// UDP_SOCKET
+
+/*******************************************************************************************
+  Parameters
+  (Uncomment and declare parameters as needed)
+*******************************************************************************************/
+//INTEGER_PARAMETER groupID;
+// SIGNED_INTEGER_PARAMETER
+// LONG_INTEGER_PARAMETER
+// SIGNED_LONG_INTEGER_PARAMETER
+STRING_PARAMETER	Password[4];
+
+/*******************************************************************************************
+  Parameter Properties
+  (Uncomment and declare parameter properties as needed)
+*******************************************************************************************/
+
+#BEGIN_PARAMETER_PROPERTIES Password
+   propValidUnits = unitString;// unitString or unitDecimal|unitHex|unitPercent|unitCharacter|unitTime|unitTicks;
+   propDefaultUnit = unitString;// unitString, unitDecimal, unitHex, unitPercent, unitCharacter, unitTime or unitTicks;
+   // propBounds = lower_bound , upper_bound;
+   propDefaultValue = "1234";  // or, propDefaultValue = "";
+   // propList = // { "value" , "label" } , { "value" , "label" } , ... ;
+   // propShortDescription = "status_bar_hint_text";
+   // #BEGIN_PROP_FULL_DESCRIPTION  line_1...  line_2...  line_n  #END_PROP_FULL_DESCRIPTION
+   // #BEGIN_PROP_NOTES line_1...  line_2...  line_n  #END_PROP_NOTES
+#END_PARAMETER_PROPERTIES
+
+/*******************************************************************************************
+  Structure Definitions
+  (Uncomment and define structure definitions as needed)
+  Note:  Be sure to initialize all declared STRING variables as needed
+         For example, in Function Main: struct.myString = "";
+*******************************************************************************************/
+/*
+STRUCTURE MyStruct1
+{
+};
+
+MyStruct1 struct;
+*/
+
+/*******************************************************************************************
+  Global Variables
+  (Uncomment and declare global variables as needed)
+  Note:  Be sure to initialize all declared STRING variables as needed
+         For example, in Function Main: myString = "";
+*******************************************************************************************/
+// LONG_INTEGER
+// SIGNED_INTEGER
+// SIGNED_LONG_INTEGER
+
+INTEGER iLast;
+INTEGER	nextChar;
+
+INTEGER	DATA[12];
+STRING 	temp[23];
+STRING	cmd[23];
+
+// LONG_INTEGER
+// SIGNED_INTEGER
+// SIGNED_LONG_INTEGER
+
+
+// INTEGER
+// LONG_INTEGER
+// SIGNED_INTEGER
+// SIGNED_LONG_INTEGER
+// STRING
+
+/*******************************************************************************************
+  Functions
+  (Add any additional functions here)
+  Note:  Functions must be physically placed before the location in
+         the code that calls them.
+*******************************************************************************************/
+/*
+Function MyFunction1()
+{
+    // TODO:  Add local variable declarations here
+
+    // TODO:  Add code here
+}
+*/
+
+/*
+Integer_Function MyIntFunction1()
+{
+    // TODO:  Add local variable declarations here
+
+    // TODO:  Add code here
+
+    Return (0);
+}
+*/
+
+/*
+String_Function MyStrFunction1()
+{
+    // TODO:  Add local variable declarations here
+
+    // TODO:  Add code here
+
+    Return ("");
+}
+*/
+
+/*******************************************************************************************
+  Event Handlers
+  (Uncomment and declare additional event handlers as needed)
+*******************************************************************************************/
+
+PUSH Query
+{
+	INTEGER i;
+	
+	for( i = 1 to PARTITION )
+	{
+		delay(30);
+		Makestring(TxData, "RA%03d\x0D", i);
+	}
+}
+
+PUSH Partition_Arm
+{
+	INTEGER b;
+	INTEGER iArmMode;
+	
+	b =	GetLastModifiedArrayIndex ();
+	iArmMode 	= 'F';	//强制布防
+
+	Partition_Armd[b]		= 1;
+	Partition_Disarmed[b]	= 0;
+
+	Makestring(TxData, "AA%03d%s%s\x0D", b, CHR(iArmMode), Password);	// AA001F1234<CR>
+}
+
+PUSH Partition_Disarm
+{
+	integer b;
+	b =	GetLastModifiedArrayIndex();
+
+	Partition_Armd[b]		= 0;
+	Partition_Disarmed[b]	= 1;
+
+	Makestring(TxData, "AD%03d%s\x0D", b, Password);	// AD0011234<CR>
+}
+
+/*
+RELEASE input
+{
+    // TODO:  Add code here
+}
+*/
+
+CHANGE RxData
+{
+	INTEGER iDisarm, iArming, iForceArm, iStayArm, iImmediatelyArm;
+	INTEGER iZoneMemory, iFault, iNotReady, iPgmMode, iAlarm, iStrobe;
+	STRING	strStatus[255];
+
+	INTEGER iEventGroup, iEventNum, iPartitionNum;	//事件组，事件号，分区号
+	
+	iDisarm		= 0;
+	iArming		= 0;
+	iForceArm	= 0;
+	iStayArm	= 0;
+	iImmediatelyArm	= 0;
+	
+	iZoneMemory	= 0;
+	iFault		= 0;
+	iNotReady	= 0;
+	iPgmMode	= 0;
+	iAlarm		= 0;
+	iStrobe		= 0;
+	
+	strStatus	= "";
+	
+	do
+	{
+		nextChar = getc(RxData); // get the next character
+		temp = temp + chr(nextChar);
+		
+		//当获取到命令结束字符时，对命令进行处理，注意处理命令BUG
+		if ( nextChar = 0x0D )
+		{
+			cmd = temp;
+			ClearBuffer(temp);
+			TRACE("[%s] cmd = %s\n", time(), cmd);
+		}
+	} until (len(RxData) = 0); // empty the buffer
+	
+	//分区状态查询反馈，格式：RA001DMTNPAS<CR>
+	if( len(cmd) = 13 && MID(cmd, 1, 2) = "RA" )
+	{
+		iPartitionNum = ATOI(MID(cmd, 3, 3));
+		
+		//Byte06: D = 已撤防; A = 已布防; F = 已强制布防; S = 已留守布防; I = 已立即布防; 
+		if( MID(cmd, 6, 1) = "D" )		{	iDisarm = 1;	strStatus = strStatus + "Disarm";	Partition_Armd[iPartitionNum] = 0;	Partition_Disarmed[iPartitionNum] = 1;	}
+		else if( MID(cmd, 6, 1) = "A" )	{	iArming	= 1;	strStatus = strStatus + "Arming";	}
+		else if( MID(cmd, 6, 1) = "F" )	{	iForceArm = 1;	strStatus = strStatus + "Force Arm";	}
+		else if( MID(cmd, 6, 1) = "S" )	{	iStayArm = 1;	strStatus = strStatus + "Stay Arm";	}
+		else if( MID(cmd, 6, 1) = "I" )	{	iImmediatelyArm = 1;	strStatus = strStatus + "Immediately Arm";	}
+		
+		if( MID(cmd, 7, 1) = "M" )	{	iZoneMemory = 1;	strStatus = strStatus + ", Zone Memory Active";	}	//Byte07: M = 防区记忆; 	O = OK;
+		if( MID(cmd, 8, 1) = "T" )	{	iFault = 1;			strStatus = strStatus + ", Fault";	}				//Byte08: T = 故障; 		O = OK;
+		if( MID(cmd, 9, 1) = "N" )	{	iNotReady = 1;		strStatus = strStatus + ", Not Ready";	}			//Byte09: N = 未准备好; 	O = OK;
+		if( MID(cmd, 10, 1) = "P" )	{	iPgmMode = 1;		strStatus = strStatus + ", PGM Mode";	}			//Byte10: P = 进入编程模式; O = OK;
+		if( MID(cmd, 11, 1) = "A" )	{	iAlarm = 1;			strStatus = strStatus + ", Alarm";	}				//Byte11: A = 报警中; 		O = OK;
+		if( MID(cmd, 12, 1) = "S" )	{	iStrobe = 1;		strStatus = strStatus + ", Strobe";	}				//Byte12: S = 频闪; 		O = OK;
+		
+		makestring(log, "[%s] Status: Partition %03d - %s.\n", time(), iPartitionNum, strStatus);
+		ClearBuffer(cmd);
+	}
+
+	//系统事件，安防主机 >> PRT3，格式：G001N005A006
+	else if( len(cmd) = 13 && MID(cmd, 1, 1) = "G" && MID(cmd, 5, 1) = "N" && MID(cmd, 9, 1) = "A" )
+	{
+		iEventGroup		= ATOI(MID(cmd, 2, 3));
+		iEventNum 		= ATOI(MID(cmd, 6, 3));
+		iPartitionNum	= ATOI(MID(cmd, 10, 3));
+
+		TRACE("[%s] len(cmd) = %d, iEventGroup = %03d, iEventNum = %03d, iPartitionNum = %03d \n"
+			, time(), len(cmd), iEventGroup, iEventNum, iPartitionNum);
+
+		if		( iEventGroup = 0)		{	Zone_Open[iEventNum] = 0;	makestring(log, "[%s] Event Group: 000 Zone closure.\n", time());	}	//G000 防区闭合
+		else if ( iEventGroup = 1 )		{	Zone_Open[iEventNum] = 1;	makestring(log, "[%s] Event Group: 001 Zone open.\n", time());	}		//G001 防区开路
+		else if ( iEventGroup = 2 )		{	Zone_Open[iEventNum] = 1;	Zone_Alarm[iEventNum] = 1;	makestring(log, "[%s] Event Group: 002 Zone tamper triggered.\n", time());	}				//G002 防区防拆被触发
+		else if ( iEventGroup = 3 )		{	Zone_Open[iEventNum] = 1;	Zone_Alarm[iEventNum] = 1;	makestring(log, "[%s] Event Group: 003 Zone fire alarm circuit failure.\n", time());	}	//G003 防区火警回路故障
+		else if ( iEventGroup = 4 )		//G004 非报告事件
+		{
+			makestring(log, "[%s] Event Group: 004 Non-reported event.\n", time());
+			
+			if( iEventNum = 0)			{	makestring(log, "[%s] 004-000 telephone line failure.\n", time());	}    	//N000 电话线故障
+			else if( iEventNum = 1 )	{	makestring(log, "[%s] 004-001 smoke reset.\n", time());	}    				//N001 烟感复位
+			else if( iEventNum = 2 )	{	makestring(log, "[%s] 004-002 no entry delay arming.\n", time());	}    	//N002 无进入延时布防
+			else if( iEventNum = 3 )	{	makestring(log, "[%s] 004-003 has stayed armed.\n", time());	}    		//N003 已留守布防
+			else if( iEventNum = 4 )	{	makestring(log, "[%s] 004-004 has been out armed.\n", time());	}    		//N004 已外出布防
+			else if( iEventNum = 5 )	{	makestring(log, "[%s] 004-005 Armed in the whole area in the left-behind mode.\n", time());	}		//N005 在留守模式下全区布防 
+			else if( iEventNum = 6 )	{	makestring(log, "[%s] 004-006 voice module in a call.\n", time());	}    	//N006 语音模块通话中
+			else if( iEventNum = 7 )	{	makestring(log, "[%s] 004-007 remote control access.\n", time());	}    	//N007 遥控器访问
+			else if( iEventNum = 8 )	{	makestring(log, "[%s] 004-008 PC communication failed.\n", time());	}    	//N008 PC通讯失败
+			else if( iEventNum = 9 )	{	makestring(log, "[%s] 004-009 midnight.\n", time());	}    				//N009 午夜
+			else if( iEventNum = 10 )	{	makestring(log, "[%s] 004-010 NEware user login.\n", time());	}    		//N010 NEware 用户登录
+			else if( iEventNum = 11 )	{	makestring(log, "[%s] 004-011 NEware user exits.\n", time());	}    		//N011 NEware 用户退出
+			else if( iEventNum = 12 )	{	makestring(log, "[%s] 004-012 User Initiated Callup.\n", time());	}    	//N012 User Initiated Callup
+			else if( iEventNum = 13 )	{	makestring(log, "[%s] 004-013 Forced response.\n", time());	}    			//N013 强制应答
+			else if( iEventNum = 14 )	{	makestring(log, "[%s] 004-014 forced hang up.\n", time());	}    			//N014 强制挂机
+			else						{	makestring(log, "[%s] Unknow Event %03d-%03d.", time(), iEventGroup, iEventNum);	}          
+		}
+		else if ( iEventGroup = 5 )		{	makestring(log, "[%s] Event Group: 005 Password Input by keyboard.\n", time());	}	//G005 通过键盘输入密码
+		else if ( iEventGroup = 6 )		{	makestring(log, "[%s] Event Group: 006 User access door.\n", time());	}			//G006 用户访问门
+		else if ( iEventGroup = 7 )		{	makestring(log, "[%s] Event Group: 007 PGM bypass.\n", time());	}					//G007 旁路编程
+		else if ( iEventGroup = 8 )		{	makestring(log, "[%s] Event Group: 008 Zone alarm delay sending.\n", time());	}	//G008 防区报警延时发送
+		else if ( iEventGroup = 9 )		{	Partition_Armd[iPartitionNum] = 1;	Partition_Disarmed[iPartitionNum] = 0;	makestring(log, "[%s] Event Group: 009 Administrator arming.\n", time());	}		//G009 管理员布防
+		else if ( iEventGroup = 10 )	{	Partition_Armd[iPartitionNum] = 1;	Partition_Disarmed[iPartitionNum] = 0;	makestring(log, "[%s] Event Group: 010 User arming.\n", time());	}				//G010 用户布防
+		else if ( iEventGroup = 11 )	{	Partition_Armd[iPartitionNum] = 1;	Partition_Disarmed[iPartitionNum] = 0;	makestring(log, "[%s] Event Group: 011 Key switch arming.\n", time());	}			//G011 钥匙开关布防
+		else if ( iEventGroup = 12 )	{	Partition_Armd[iPartitionNum] = 1;	Partition_Disarmed[iPartitionNum] = 0;	makestring(log, "[%s] Event Group: 012 Special arming.\n", time());	}				//G012 特殊布防
+
+		else if ( iEventGroup = 13 )	{	Partition_Armd[iPartitionNum] = 0;	Partition_Disarmed[iPartitionNum] = 1;	makestring(log, "[%s] Event Group: 013 Administrator disarm.\n", time());	}		//G013 管理员撤防
+		else if ( iEventGroup = 14 )	{	Partition_Armd[iPartitionNum] = 0;	Partition_Disarmed[iPartitionNum] = 1;	makestring(log, "[%s] Event Group: 014 User disarm.\n", time());	}				//G014 用户撤防
+		else if ( iEventGroup = 15 )	{	Partition_Armd[iPartitionNum] = 0;	Partition_Disarmed[iPartitionNum] = 1;	makestring(log, "[%s] Event Group: 015 Key switch disarm.\n", time());	}			//G015 钥匙开关撤防
+		else if ( iEventGroup = 16 )	{	Partition_Armd[iPartitionNum] = 0;	Partition_Disarmed[iPartitionNum] = 1;	makestring(log, "[%s] Event Group: 016 After the alarm, the administrator disarms.\n", time());	}		//G016 报警后管理员撤防
+		else if ( iEventGroup = 17 )	{	Partition_Armd[iPartitionNum] = 0;	Partition_Disarmed[iPartitionNum] = 1;	makestring(log, "[%s] Event Group: 017 User disarmed after alarm.\n", time());	}						//G017 报警后用户撤防
+		else if ( iEventGroup = 18 )	{	Partition_Armd[iPartitionNum] = 0;	Partition_Disarmed[iPartitionNum] = 1;	makestring(log, "[%s] Event Group: 018 After the alarm, the key switch is disarmed.\n", time());	}	//G018 报警后钥匙开关撤防
+		else if ( iEventGroup = 19 )	{	Partition_Armd[iPartitionNum] = 0;	Partition_Disarmed[iPartitionNum] = 1;	makestring(log, "[%s] Event Group: 019 Administrator cancels the alarm.\n", time());	}				//G019 管理员取消报警
+		else if ( iEventGroup = 20 )	{	Partition_Armd[iPartitionNum] = 0;	Partition_Disarmed[iPartitionNum] = 1;	makestring(log, "[%s] Event Group: 020 User cancels the alarm.\n", time());	}		//G020 用户取消报警
+		else if ( iEventGroup = 21 )	{	Partition_Armd[iPartitionNum] = 0;	Partition_Disarmed[iPartitionNum] = 1;	makestring(log, "[%s] Event Group: 021 Key switch cancels alarm.\n", time());	}	//G021 钥匙开关取消报警
+		else if ( iEventGroup = 22 )	//G022 特殊撤防事件
+		{
+			Partition_Armd[iPartitionNum] = 0;
+			Partition_Disarmed[iPartitionNum] = 1;
+			makestring(log, "[%s] Event Group: 022 Special disarming event.\n", time());
+			
+			if( iEventNum = 0 )			{	makestring(log, "[%s] 022-000 Automatic arming cancellation.\n", time());	}					//N000 自动布防取消
+			else if ( iEventNum = 1 )	{	makestring(log, "[%s] 022-001 One button left behind / immediate and disarmed.\n", time());	}	//N001 一键留守 / 立即和撤防
+			else if ( iEventNum = 2 )	{	makestring(log, "[%s] 022-002 Software disarming.\n", time());	}								//N002 软件撤防
+			else if ( iEventNum = 3 )	{	makestring(log, "[%s] 022-003 Software disarmed after alarm.\n", time());	}					//N003 报警后软件撤防
+			else if ( iEventNum = 4 )	{	makestring(log, "[%s] 022-004 Software cancel alarm.\n", time());	}							//N004 软件取消报警
+			else if ( iEventNum = 5 )	{	makestring(log, "[%s] 022-005 Future use.\n", time());	}										//N005 将来用
+			else if ( iEventNum = 6 )	{	makestring(log, "[%s] 022-006 Future use.\n", time());	}										//N006 将来用
+			else if ( iEventNum = 7 )	{	makestring(log, "[%s] 022-007 Future use.\n", time());	}										//N007 将来用
+			else if ( iEventNum = 8 )	{	makestring(log, "[%s] 022-008 Voice call disarm.\n", time());	}								//N008 语音电话撤防
+		}	
+		else if ( iEventGroup = 23 )	{	makestring(log, "[%s] Event Group: 023 The zone is bypassed.\n", time());	}					//G023 防区被旁路
+
+		else if ( iEventGroup = 24 )	{	Zone_Open[iEventNum] = 1;	Zone_Alarm[iEventNum] = 1;	makestring(log, "[%s] Event Group: 024 Zone alarm.\n", time());	}				//G024 防区报警
+		else if ( iEventGroup = 25 )	{	Zone_Open[iEventNum] = 1;	Zone_Alarm[iEventNum] = 1;	makestring(log, "[%s] Event Group: 025 Fire alarm.\n", time());	}				//G025 火警报警
+		else if ( iEventGroup = 26 )	{	Zone_Open[iEventNum] = 1;	Zone_Alarm[iEventNum] = 1;	makestring(log, "[%s] Event Group: 026 Zone alarm recovery.\n", time());	}	//G026 防区报警恢复
+		else if ( iEventGroup = 27 )	{	Zone_Open[iEventNum] = 1;	Zone_Alarm[iEventNum] = 1;	makestring(log, "[%s] Event Group: 027 Fire alarm recovery.\n", time());	}	//G027 火警报警恢复
+
+		else if ( iEventGroup = 28 )	{	Partition_Armd[iPartitionNum] = 0;	Partition_Disarmed[iPartitionNum] = 1;	makestring(log, "[%s] Event Group: 028 User disarmed in advance.\n", time());	}	//G028 用户提前撤防
+		else if ( iEventGroup = 29 )	{	Partition_Armd[iPartitionNum] = 0;	Partition_Disarmed[iPartitionNum] = 1;	makestring(log, "[%s] Event Group: 029 User delayed disarming.\n", time());	}		//G029 用户延迟撤防		
+
+		else if ( iEventGroup = 30 )	{	makestring(log, "[%s] Event Group: 030 Special alarm.\n", time());	}				//G030 特殊报警
+		else if ( iEventGroup = 31 )	{	makestring(log, "[%s] Event Group: 031 User hijacking alarm.\n", time());	}		//G031 用户劫持报警
+
+		else if ( iEventGroup = 32 )	{	Zone_Open[iEventNum] = 0;	Zone_Alarm[iEventNum] = 1;	makestring(log, "[%s] Event Group: 032 Zone closure.\n", time());	}				//G032 防区关闭
+
+		else if ( iEventGroup = 33 )	{	Zone_Open[iEventNum] = 1;	Zone_Alarm[iEventNum] = 1;	makestring(log, "[%s] Event Group: 033 Zone tamper triggered.\n", time());	}		//G033 防区防拆被触发
+
+		else if ( iEventGroup = 34 )	{	Zone_Open[iEventNum] = 1;	Zone_Alarm[iEventNum] = 0;	makestring(log, "[%s] Event Group: 034 Zone detachment recovery.\n", time());	}	//G034 防区防拆恢复
+
+		else if ( iEventGroup = 35 )	{	makestring(log, "[%s] Event Group: 035 Special tamper is triggered.\n", time());		}	//G035 特殊防拆被触发
+		else if ( iEventGroup = 36 )	{	makestring(log, "[%s] Event Group: 036 Fault event.\n", time());		}					//G036 故障事件
+		else if ( iEventGroup = 37 )	{	makestring(log, "[%s] Event Group: 037 Recovery.\n", time());		}						//G037 故障恢复
+		else if ( iEventGroup = 38 )	{	makestring(log, "[%s] Event Group: 038 Module failure.\n", time());		}					//G038 模块故障
+		else if ( iEventGroup = 39 )	{	makestring(log, "[%s] Event Group: 039 Module failure recovery.\n", time());		}		//G039 模块故障恢复
+		else if ( iEventGroup = 40 )	{	makestring(log, "[%s] Event Group: 040 Phone dialing failed.\n", time());		}			//G040 电话拨号失败
+
+		else if ( iEventGroup = 41 )	{	Zone_Open[iEventNum] = 1;	Zone_Alarm[iEventNum] = 1;	makestring(log, "[%s] Event Group: 041 Zone low battery.\n", time());	}					//G041 防区低电量
+		else if ( iEventGroup = 42 )	{	Zone_Open[iEventNum] = 1;	Zone_Alarm[iEventNum] = 1;	makestring(log, "[%s] Event Group: 042 Zone detection failure.\n", time());	}				//G042 防区检测故障
+
+		else if ( iEventGroup = 43 )	{	Zone_Open[iEventNum] = 1;	Zone_Alarm[iEventNum] = 0;	makestring(log, "[%s] Event Group: 043 Zone low battery recovery.\n", time());	}			//G043 防区低电量恢复
+		else if ( iEventGroup = 44 )	{	Zone_Open[iEventNum] = 1;	Zone_Alarm[iEventNum] = 0;	makestring(log, "[%s] Event Group: 044 Zone detection failure recovery.\n", time());	}	//G044 防区检测故障恢复
+
+		else if ( iEventGroup = 45 )	{	makestring(log, "[%s] Event Group: 045 Special Event.\n", time());		}							//G045 特殊事件
+		else if ( iEventGroup = 46 )	{	makestring(log, "[%s] Event Group: 046 User arming in advance.\n", time());		}					//G046 用户提前布防 
+		else if ( iEventGroup = 47 )	{	makestring(log, "[%s] Event Group: 047 User delay arming.\n", time());		}						//G047 用户延迟布防
+		else if ( iEventGroup = 48 )	{	makestring(log, "[%s] Event Group: 048 Function key.\n", time());		}							//G048 功能键
+		else if ( iEventGroup = 49 )	{	makestring(log, "[%s] Event Group: 049 Request to quit.\n", time());		}						//G049 请求退出
+		else if ( iEventGroup = 50 )	{	makestring(log, "[%s] Event Group: 050 Legal access.\n", time());		}							//G050 合法访问
+		else if ( iEventGroup = 51 )	{	makestring(log, "[%s] Event Group: 051 Door timeout has not closed the alarm.\n", time());		}	//G051 门超时未关报警
+		else if ( iEventGroup = 52 )	{	makestring(log, "[%s] Event Group: 052 The door is forced on the alarm.\n", time());		}		//G052 门被强制 on 报警
+		else if ( iEventGroup = 53 )	{	makestring(log, "[%s] Event Group: 053 Door timeout has not been restored.\n", time());		}		//G053 门超时未关恢复
+		else if ( iEventGroup = 54 )	{	makestring(log, "[%s] Event Group: 054 The door is forced on after recovery.\n", time());		}	//G054 门被强制 on 后恢复
+		else if ( iEventGroup = 55 )	{	makestring(log, "[%s] Event Group: 055 Unused.\n", time());		}									//G055 未使用
+		else if ( iEventGroup = 56 )	{	makestring(log, "[%s] Event Group: 056 Unused.\n", time());		}									//G056 未使用
+		else if ( iEventGroup = 57 )	{	makestring(log, "[%s] Event Group: 057 Intelligent zone is triggered.\n", time());		}			//G057 智能防区被触发
+		else if ( iEventGroup = 58 )	{	makestring(log, "[%s] Event Group: 058 New module added to the bus.\n", time());		}			//G058 总线增加新模块
+		else if ( iEventGroup = 59 )	{	makestring(log, "[%s] Event Group: 059 Bus reduction module.\n", time());		}					//G059 总线减少模块
+		else if ( iEventGroup = 60 )	{	makestring(log, "[%s] Event Group: 060 Future use.\n", time());		}								//G060 将来用
+		else if ( iEventGroup = 61 )	{	makestring(log, "[%s] Event Group: 061 Future use.\n", time());		}								//G061 将来用
+		else if ( iEventGroup = 62 )	{	makestring(log, "[%s] Event Group: 062 Access permission.\n", time());		}						//G062 访问允许
+		else if ( iEventGroup = 63 )	{	makestring(log, "[%s] Event Group: 063 Access denied.\n", time());		}							//G063 访问被拒绝
+		else if ( iEventGroup = 64 )				//064 状态 1
+		{
+			makestring(log, "[%s] Event Group: 064 Status 1.\n", time());
+			
+			if ( iEventNum = 0 )		{	Partition_Armd[iPartitionNum] = 1;	Partition_Disarmed[iPartitionNum] = 0;	makestring(log, "[%s] 064-000 Armed.\n", time());	}				//N000 已布防
+			else if( iEventNum = 1 )	{	Partition_Armd[iPartitionNum] = 0;	Partition_Disarmed[iPartitionNum] = 1;	makestring(log, "[%s] 064-001 Forced arming.\n", time());	}		//N001 已强制布防
+			else if( iEventNum = 2 )	{	Partition_Armd[iPartitionNum] = 0;	Partition_Disarmed[iPartitionNum] = 1;	makestring(log, "[%s] 064-002 Stayed armed.\n", time());	}		//N002 已留守布防
+			else if( iEventNum = 3 )	{	Partition_Armd[iPartitionNum] = 0;	Partition_Disarmed[iPartitionNum] = 1;	makestring(log, "[%s] 064-003 Armed immediately.\n", time());	}	//N003 已立即布防
+			else if( iEventNum = 4 )	{	makestring(log, "[%s] 064-004 Flash alarm.\n", time());	}		//N004 闪光报警
+			else if( iEventNum = 5 )	{	makestring(log, "[%s] 064-005 Mute alarm.\n", time());	}		//N005 静音报警
+			else if( iEventNum = 6 )	{	makestring(log, "[%s] 064-006 Audible alarm.\n", time());	}	//N006 有声报警
+			else if( iEventNum = 7 )	{	makestring(log, "[%s] 064-007 Fire alarm.\n", time());	}		//N007 火警报警
+			else						{	makestring(log, "[%s] Unknow Event %03d-%03d.\n", time(), iEventGroup, iEventNum);	}
+		}
+		else if ( iEventGroup = 65 )				//065 状态 2
+		{	
+			makestring(log, "[%s] Event Group: 065 Status 2.\n", time());
+			
+			if( iEventNum = 0 )			{	makestring(log, "[%s] 065-000 Prepare.\n", time());	}			//N000 准备
+			else if( iEventNum = 1 )	{	makestring(log, "[%s] 065-001 Exit delay.\n", time());	}		//N001 退出延时
+			else if( iEventNum = 2 )	{	makestring(log, "[%s] 065-002 Entry delay.\n", time());	}		//N002 进入延时
+			else if( iEventNum = 3 )	{	makestring(log, "[%s] 065-003 system error.\n", time());	}		//N003 系统故障
+			else if( iEventNum = 4 )	{	makestring(log, "[%s] 065-004 Alarm history.\n", time());	}	//N004 报警历史记录
+			else if( iEventNum = 5 )	{	makestring(log, "[%s] 065-005 The zone is bypassed.\n", time());	}							//N005 防区被旁路
+			else if( iEventNum = 6 )	{	makestring(log, "[%s] 065-006 Installer programming, administrator bypass.\n", time());	}	//N006 安装者编程，管理员旁路
+			else if( iEventNum = 7 )	{	makestring(log, "[%s] 065-007 Keyboard lock.\n", time());	}	//N007 键盘锁定
+			else						{	makestring(log, "[%s] Unknow Event %03d-%03d.\n", time(), iEventGroup, iEventNum);	}
+		}
+		else if ( iEventGroup = 66 )				//066 状态 3
+		{	
+			makestring(log, "[%s] Event Group: 066 Status 3.\n", time());
+
+			if( iEventNum = 0 )			{	makestring(log, "[%s] 066-000 Intelligent zone delay.\n", time());	}		//N000 智能防区延时中
+			else if( iEventNum = 1 )	{	makestring(log, "[%s] 066-001 Fire alarm delay.\n", time());	}				//N001 火警延时中
+			else if( iEventNum = 2 )	{	Partition_Armd[iPartitionNum] = 1;	Partition_Disarmed[iPartitionNum] = 0; 	makestring(log, "[%s] Event: 002 Automatic arming.\n", time()); }	//N002 自动布防;
+			else if( iEventNum = 3 )	{	Partition_Armd[iPartitionNum] = 1;	Partition_Disarmed[iPartitionNum] = 0; 	makestring(log, "[%s] Event: 003 Phone arming.\n", time()); }		//N003 电话布防;
+			else if( iEventNum = 4 )	{	makestring(log, "[%s] 066-004 Tamper trigger.\n", time());	}				//N004 防拆触发
+			else if( iEventNum = 5 )	{	makestring(log, "[%s] 066-005 Zone battery is low.\n", time());	}			//N005 防区电池电量低
+			else if( iEventNum = 6 )	{	makestring(log, "[%s] 066-006 Fire alarm circuit failure.\n", time());	}	//N006 火警回路故障
+			else if( iEventNum = 7 )	{	makestring(log, "[%s] 066-007 Zone monitoring failure.\n", time());	}		//N007 防区监测故障
+			else						{	makestring(log, "[%s] Unknow Event %03d-%03d.\n", time(), iEventGroup, iEventNum);	}
+		}
+		else
+		{
+			makestring(log, "[%s] Unknown iEventGroup = %03d\n",  time(), iEventGroup);
+		}
+		
+		ClearBuffer(cmd);
+	}
+}
+
+/*
+EVENT
+{
+    // TODO:  Add code here
+}
+*/
+
+/*
+SOCKETCONNECT
+{
+    // TODO:  Add code here
+}
+*/
+
+/*
+SOCKETDISCONNECT
+{
+    // TODO:  Add code here
+}
+*/
+
+/*
+SOCKETRECEIVE
+{
+    // TODO:  Add code here
+}
+*/
+
+/*
+SOCKETSTATUS
+{
+    // TODO:  Add code here
+}
+*/
+
+/*******************************************************************************************
+  Main()
+  Uncomment and place one-time startup code here
+  (This code will get called when the system starts up)
+*******************************************************************************************/
+
+Function Main()
+{
+	temp = "";
+}
+
